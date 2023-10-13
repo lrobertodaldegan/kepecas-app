@@ -13,9 +13,11 @@ import Footer from "../../components/Footer";
 import Header from "../../components/Header";
 import Label from "../../components/Label";
 import logo from '../../assets/img/logo_menor.png';
+import { get } from '../../Service/Rest/RestService';
+import CacheService from '../../Service/Cache/CacheService';
 
 
-const ProfileScreen = ({route, navigation}) => {
+const ProfileScreen = ({navigation}) => {
   const [user, setUser] = useState({});
 
   useEffect(() => {
@@ -23,18 +25,11 @@ const ProfileScreen = ({route, navigation}) => {
   }, []);
 
   const getUser = () => {
-    let userId = null;
-    
-    if(route && route !== null && route.params && route.params !== null){
-      userId = route.params.userId;
-    }
-
-    setUser({
-      foto:logo,
-      id:0,
-      nome:'Usuário X',
-      desc:'Resumo resumo resumo resumo'
-    });
+    get('/user').then(response => {
+      if(response.status === 200)
+        setUser(response.data);
+    })
+    .catch(err => console.log(err));
   }
 
   const getPosts = () => {
@@ -47,6 +42,12 @@ const ProfileScreen = ({route, navigation}) => {
     }
     
     return posts;
+  }
+
+  const handleSignOut = () => {
+    CacheService.wipe('@jwt')
+    .then(() => navigation.navigate('welcome'))
+    .catch(err => {console.log(err); navigation.navigate('welcome');});
   }
 
   return (
@@ -62,17 +63,17 @@ const ProfileScreen = ({route, navigation}) => {
                 style={styles.profileImage}
                 resizeMode='contain'/>
 
-            <Label value={user.nome} style={styles.profileName}/>
+            <Label value={user.name} style={styles.profileName}/>
 
-            <Label value={user.desc} 
+            <Label value={`${user.email}\n${user.login} - ${user.phone}`} 
                 style={styles.profileDesc}/>
           
-            <Button2 label={'Bloquear usuário'} style={styles.blockBtn}/>
+            <Button2 label={'Sair'} style={styles.blockBtn} action={() => handleSignOut()}/>
           </View>
 
-          <View style={styles.postsWrap}>
+          {/* <View style={styles.postsWrap}>
             {getPosts()}
-          </View>
+          </View> */}
         </ScrollView>
 
         <Footer navigation={navigation} 
@@ -120,7 +121,8 @@ const styles = StyleSheet.create({
   },
   profileDesc: {
     fontSize:14,
-    color:'#fafafa'
+    color:'#fafafa',
+    textAlign:'center'
   },
   blockBtn:{
     width: size.width - 80,

@@ -10,46 +10,78 @@ import { faCartFlatbed, faShop } from '@fortawesome/free-solid-svg-icons'
 import Card from "../../components/Card";
 import Footer from "../../components/Footer";
 import Header from "../../components/Header";
+import mobileAds, { MaxAdContentRating, BannerAd, BannerAdSize, TestIds } from 'react-native-google-mobile-ads';
 
 
 const HomeScreen = ({navigation}) => {
+
+  mobileAds()
+  .setRequestConfiguration({
+    // Update all future requests suitable for parental guidance
+    maxAdContentRating: MaxAdContentRating.PG,
+    // Indicates that you want your content treated as child-directed for purposes of COPPA.
+    tagForChildDirectedTreatment: true,
+    // Indicates that you want the ad request to be handled in a
+    // manner suitable for users under the age of consent.
+    tagForUnderAgeOfConsent: true,
+    // An array of test device IDs to allow.
+    testDeviceIdentifiers: ['EMULATOR'],
+  })
+  .then(() => {
+    // Request config successfully set!
+  });
+
+  const adapterStatuses = mobileAds().initialize();
+  const adUnitId = __DEV__ ? TestIds.BANNER : 'ca-app-pub-2420598559068720~4910331381';
+
   return (
     <View style={styles.wrap}>
       <StatusBar backgroundColor='#fafafa' barStyle='dark-content'/>
 
-      <Header navigation={navigation}/>
+      <View style={styles.wrapPadding}>
+        <Header navigation={navigation}/>
 
-      <View style={styles.content}>
-        <Label value='Seu consultor automotivo de bolso!'
-            style={styles.title}/>
+        <View style={styles.content}>
+          <Label value='Seu consultor automotivo de bolso!'
+              style={styles.title}/>
 
-        <Label value='Consulte peças e serviços parceiros'
-            style={styles.subtitle}/>
+          <Label value='Consulte peças e serviços parceiros'
+              style={styles.subtitle}/>
 
-        <View style={styles.cardsWrap}>
-          <Card style={styles.cardP} content={
-              <View style={styles.cardContent}>
-                <Icon style={styles.cardPIcon} size={70} icon={faCartFlatbed}/>
+          <View style={styles.cardsWrap}>
+            <Card style={styles.cardP} content={
+                <View style={styles.cardContent}>
+                  <Icon style={styles.cardPIcon} size={52} icon={faCartFlatbed}/>
 
-                <Label value='Buscar por peças' style={styles.cardLbl}/>
-              </View>
-           }/>
+                  <View>
+                    <Label value={`Buscar por peças `} style={styles.cardLbl}/>
+                    <Label value={`em breve...`} style={styles.cardLegend}/>
+                  </View>
+                </View>
+            }/>
 
-          <Card style={styles.cardS} content={
-              <View style={styles.cardContent}>
-                <Icon style={styles.cardSIcon} size={70} icon={faShop}/>
+            <Card action={() => navigation.navigate('search')}
+                style={styles.cardS} content={
+                  <View style={styles.cardContent}>
+                    <Icon style={styles.cardSIcon} size={50} icon={faShop}/>
 
-                <Label value='Buscar por serviços' style={styles.cardLbl}/>
-              </View>
-           }/>
-
-          <Card style={styles.cardAd} content={
-              <View style={styles.cardAdContent}>
-                <Label value='ANÚNCIO' style={styles.adLbl}/>
-                <Label value='(LINK EXTERNO)' style={styles.adLbl}/>
-              </View>
-           }/>
+                    <Label value='Buscar por serviços' style={styles.cardLbl}/>
+                  </View>
+            }/>
+                
+          </View>
         </View>
+      </View>
+
+      <View style={styles.cardAdContent}>
+        <BannerAd
+          style={styles.cardAdContent}
+          unitId={adUnitId}
+          size={BannerAdSize.MEDIUM_RECTANGLE}
+          requestOptions={{
+            requestNonPersonalizedAdsOnly: true,
+          }}
+        />
       </View>
 
       <Footer navigation={navigation}/>
@@ -64,7 +96,9 @@ const styles = StyleSheet.create({
     backgroundColor:'#fafafa',
     width:size.width,
     height:size.height,
-    paddingHorizontal:20,
+  },
+  wrapPadding:{
+    paddingHorizontal:20
   },
   content:{
     marginTop: 40
@@ -95,15 +129,11 @@ const styles = StyleSheet.create({
     flexDirection:'row',
     justifyContent:'center',
     alignItems:'center',
-    height:150
+    height:120
   },
   cardAdContent:{
-    justifyContent:'center',
-    alignItems:'center',
-    height:150,
-    borderRadius:10,
-    borderWidth:1,
-    borderColor:'#134C83'
+    margin:20,
+    alignItems:'center'
   },
   cardPIcon: {
     color:'#fafafa',
@@ -119,6 +149,10 @@ const styles = StyleSheet.create({
     color:'#fafafa',
     fontSize:18,
     fontFamily:'Montserrat-Bold'
+  },
+  cardLegend:{
+    color:'#fafafa',
+    fontSize:12,
   },
   adLbl:{
     color:'#134C83',

@@ -4,7 +4,7 @@ import {
   Dimensions,
 } from "react-native";
 
-const Card = ({style={}, content=<></>}) => {
+const Card = ({style={}, content=<></>, action=()=>null}) => {
   return (
     <TouchableHighlight underlayColor='#fafafa' 
         style={[styles.card, style]} onPress={() => action()}>
@@ -18,7 +18,7 @@ const Card = ({style={}, content=<></>}) => {
 const styles = StyleSheet.create({
   card:{
     borderRadius:10,
-    height:150,
+    height:120,
     width: Dimensions.get('screen').width - 40
   }
 });

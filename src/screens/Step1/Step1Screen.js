@@ -4,13 +4,16 @@ import {
   StyleSheet,
   StatusBar,
   Dimensions,
-  TextInput
+  TextInput,
+  ScrollView,
 } from "react-native";
 import Button1 from "../../components/Button1";
 import Label from "../../components/Label";
 import Logo from "../../components/Logo";
 import Divider from '../../components/Divider';
-
+import DeviceInfo from 'react-native-device-info';
+import CacheService from '../../Service/Cache/CacheService';
+import {post} from '../../Service/Rest/RestService';
 
 const Step1Screen = ({navigation}) => {
   const [nome, setNome] = useState(null);
@@ -19,11 +22,51 @@ const Step1Screen = ({navigation}) => {
   const [whats, setWhats] = useState(null);
   const [email, setEmail] = useState(null);
 
+  const handleSubmit = () => {
+    let deviceId = DeviceInfo.getDeviceId();
+    let uniqueId = DeviceInfo.getUniqueIdSync();
+
+    let device = {
+      id: deviceId,
+      uniqueId: uniqueId,
+    }
+
+    let user = {
+      name: nome,
+      login: login,
+      phone: whats,
+      email: email
+    }
+
+    post('/auth/signup', {...user, password:senha, device:device}).then(response => {
+      if(response.status == 201){
+        CacheService.register('@user', JSON.stringify(user))
+          .then(() => handleSignin())
+          .catch((err) => console.log(err));
+      } else {
+        navigation.navigate('error');
+      }
+    }).catch(err => {
+      console.log(err); 
+      navigation.navigate('error');
+    });
+  }
+
+  const handleSignin = () => {
+    post('/auth/signin', {login:login, password:senha}).then(response => {
+      if(response.status == 200){
+        CacheService.register('@jwt', response.data.token)
+          .then(() => navigation.navigate('step2'))
+          .catch((err) => console.log(err));
+      }
+    }).catch(err => {console.log(err); navigation.navigate('error');});
+  }
+
   return (
     <>
       <StatusBar backgroundColor='#B6ECFF' barStyle='dark-content'/>
 
-      <View style={styles.wrap}>
+      <ScrollView style={styles.wrap}>
         <Logo style={styles.logo}/>
 
         <View style={styles.inputsWrap}>
@@ -31,35 +74,35 @@ const Step1Screen = ({navigation}) => {
           <Label value='Informe seus dados para o cadastro:'/>
 
           <TextInput style={styles.input} placeholderTextColor='#134C83' 
-              onChangeText={() => setNome(nome)} value={nome}
+              onChangeText={(val) => setNome(val)} value={nome}
               placeholder='Seu nome'/>
 
           <TextInput style={styles.input} placeholderTextColor='#134C83' 
-              onChangeText={() => setLogin(login)} value={login}
+              onChangeText={(val) => setLogin(val)} value={login}
               placeholder='Seu novo login'/>
 
           <TextInput style={styles.input} placeholderTextColor='#134C83' 
-              onChangeText={() => setSenha(senha)} value={senha}
+              onChangeText={(val) => setSenha(val)} value={senha}
               placeholder='Sua nova senha'/>
 
           <Divider />
 
           <TextInput style={styles.input} placeholderTextColor='#134C83' 
-              onChangeText={() => setWhats(whats)} value={whats}
+              onChangeText={(val) => setWhats(val)} value={whats}
               placeholder='Seu número do WhatsApp'/>
 
           <Label value='ou' style={styles.ou}/>
 
           <TextInput style={styles.input} placeholderTextColor='#134C83' 
-              onChangeText={() => setEmail(email)} value={email}
+              onChangeText={(val) => setEmail(val)} value={email}
               placeholder='Seu e-mail'/>
 
-          <Button1 label='Continuar' style={styles.continuar} action={() => navigation.navigate('step2')}/>
+          <Button1 label='Continuar' style={styles.continuar} action={() => handleSubmit()}/>
 
           <Label style={styles.legend}
               value='Fique tranquilo! Não compartilharemos nenhum dos seus dados com terceiros!'/>
         </View>
-      </View>
+      </ScrollView>
     </>
   );
 }
@@ -89,7 +132,8 @@ const styles = StyleSheet.create({
     marginTop:10,
     backgroundColor:'rgba(255,255,255,0.5)',
     paddingHorizontal: 20,
-    fontFamily:'Montserrat-Regular'
+    fontFamily:'Montserrat-Regular',
+    color:'#134C83'
   },
   btnWrap:{
     marginTop: (screen.height / 3.5) - 50

@@ -30,6 +30,7 @@ const Footer = ({selected='home', navigation}) => {
         <Icon style={styles.footerIcon} size={22} icon={faSearch}/>
       </TouchableHighlight>
 
+      {/*TODO desabilitado por não trabalharmos como rede social ainda
       <TouchableHighlight underlayColor='#fafafa' 
           onPress={() => navigation.navigate('feed')}
           style={[styles.footerIconWrap, selected === 'feed'
@@ -41,6 +42,7 @@ const Footer = ({selected='home', navigation}) => {
                                                   ? styles.footerIconSelected 
                                                   : {}]} />
       </TouchableHighlight>
+      */}
     </View>
   );
 }
@@ -52,7 +54,7 @@ const styles = StyleSheet.create({
     flexDirection:'row',
     position:'absolute',
     bottom:70,
-    paddingHorizontal:50,
+    paddingHorizontal:100,/*50 para 3 opções, 100 para 2 */
     paddingVertical:20,
     width:size.width,
     justifyContent:'space-between',

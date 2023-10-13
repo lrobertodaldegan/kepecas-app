@@ -12,7 +12,7 @@ import Label from "../../components/Label";
 import Logo from "../../components/Logo";
 import Divider from '../../components/Divider';
 
-
+//TODO ainda não estamos aprofundando os dados de usuários e perfil de usuários para rede social
 const Step3Screen = ({navigation}) => {
   const [sobre, setSobre] = useState(null);
   const [url, setUrl] = useState(null);
@@ -94,7 +94,8 @@ const styles = StyleSheet.create({
     marginTop:10,
     backgroundColor:'rgba(255,255,255,0.5)',
     paddingHorizontal: 20,
-    fontFamily:'Montserrat-Regular'
+    fontFamily:'Montserrat-Regular',
+    color:'#134C83'
   },
   txtArea:{
     borderRadius:10,

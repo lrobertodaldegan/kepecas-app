@@ -10,23 +10,22 @@ import {
 import Button1 from "../../components/Button1";
 import Label from "../../components/Label";
 import Logo from "../../components/Logo";
-import {post} from '../../Service/Rest/RestService';
+import {post} from "../../Service/Rest/RestService";
+import CacheService from '../../Service/Cache/CacheService';
 
+const ResetCodeValidationScreen = ({navigation}) => {
+  const [code, setCode] = useState(null);
 
-const ResetSenhaScreen = ({navigation}) => {
-  const [email, setEmail] = useState(null);
-  const [btnLbl, setBtnLbl] = useState('Enviar código');
-
-  const handleSendLink = () => {
-    setBtnLbl('Enviando...');
-
-    post('/user/forgot', {email:email}).then(response => {
-      if(response.status == 200){
-        navigation.navigate('codeValidation');
-      } else {
-        navigation.navigate('error');
-      }
-    }).catch(err => {console.log(err);navigation.navigate('error');});
+  const handleValidation = () => {
+    if(code && code > 0){
+      post('/user/code', {code:code}).then(response => {
+        if(response.status == 200 && response.data.token){
+          CacheService.register('@jwt', response.data.token)
+            .then(() => navigation.navigate('resetLogin'))
+            .catch((err) => console.log(err));
+        }
+      }).catch(err => {console.log(err);navigation.navigate('error');});
+    }
   }
 
   return (
@@ -37,16 +36,14 @@ const ResetSenhaScreen = ({navigation}) => {
         <Logo style={styles.logo}/>
 
         <View style={styles.inputsWrap}>
-          <Label value='Confirme seu e-mail:'/>
+          <Label value='Confirme o código enviado para o seu e-mail:'/>
 
           <TextInput style={styles.input} placeholderTextColor='#134C83' 
-              onChangeText={(val) => setEmail(val)} value={email}
-              placeholder='E-mail cadastrado'/>
+              onChangeText={(val) => setCode(val)} value={code}
+              secureTextEntry={true}
+              placeholder='Seu código (Ex.: 7777)'/>
 
-          <Button1 label={btnLbl} action={() => handleSendLink()}/>
-
-          <Label style={styles.legend}
-              value='Enviaremos um código de confirmação para reset de senha ao o e-mail cadastrado.'/>
+          <Button1 label='Validar' action={() => handleValidation()}/>
         </View>
       </ScrollView>
     </>
@@ -87,4 +84,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ResetSenhaScreen;
+export default ResetCodeValidationScreen;

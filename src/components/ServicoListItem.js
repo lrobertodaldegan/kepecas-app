@@ -1,45 +1,110 @@
-
+import {useState, useEffect} from 'react';
 import{
   View,
   StyleSheet,
   TouchableHighlight,
   Dimensions,
-  ImageBackground,
+  Linking,
+  Image,
 } from 'react-native';
-import { faMapLocation, faShop } from '@fortawesome/free-solid-svg-icons'
+import { faMapLocation, faShop, faPhone } from '@fortawesome/free-solid-svg-icons'
 import Label from './Label';
 import Icon from './Icon';
+import {post} from '../Service/Rest/RestService';
+import Loader from './Loader';
 
-const ServicoListItem = ({item, onSelect=() => null}) => {
+const ServicoListItem = ({item, onSelect=() => null, coordinates={}, navigation}) => {
+  const [loading, setLoading] = useState(true);
+  const [distance, setDistance] = useState(0);
 
-  const getFoto = () => {
-    if(item.fotos[10] && item.fotos[10] !== null){
-      return <ImageBackground  style={styles.fotos}
-                resizeMode='contain'
-                source={{uri: item.fotos[0]}} />
-    } else {
-      return <Icon icon={faShop} style={styles.icon} size={60}/>
+  const init = async () => {
+    try{
+      if(coordinates && coordinates.longitude && coordinates.latitude){
+        if(distance < 1){
+          let itemCoord = item && item.coordinates 
+                                    ? JSON.parse(item.coordinates)
+                                    : null;
+          if(itemCoord != null){
+            let body = {coords:[coordinates, itemCoord]};
+
+            let response = await post('/service/distance', body);
+
+            if(response.status == 200)
+              setDistance(Math.round(response.data));
+          }
+        }
+      }
+
+      setLoading(false);
+    }catch(ex){
+      console.log(ex);
     }
   }
 
+  const renderDistance = () => {
+    if(loading){
+      return <Loader margin={false}/>
+    } else {
+      if(distance > 0){
+        return (
+          <Label value={`Aprox. ${(distance/1000).toFixed(2)} KM de você`} 
+              style={[styles.lbl, styles.distLbl]}/>
+        );
+      }
+    }
+  }
+
+  const renderMapLink = () => {
+    const url2 = Platform.select({
+      ios: `maps://0,0?q=${item.mapAddr}(${item.name})`,
+      android: `geo://0,0?q=${item.mapAddr}(${item.name})`
+    });
+
+    return (
+      <TouchableHighlight underlayColor='#fafafa'
+          onPress={() => Linking.openURL(url2)}>
+        <Icon icon={faMapLocation} style={styles.icon} size={20}/>
+      </TouchableHighlight>
+    )
+  }
+
+  const renderLogo = () => {
+    if(item.logo && item.logo != null){
+      return <Image source={{uri: item.logo}} style={styles.logo}/>
+    } else {
+      return <Icon icon={faShop} style={styles.icon} size={50}/>
+    }
+  }
+
+  useEffect(() => {init();}, []);
+
   return (
-    <View style={styles.wrap}>
-      <View style={styles.fotosWrap}>
-        {getFoto()}
-      </View>
+    <TouchableHighlight underlayColor='#fafafa' style={styles.wrap}
+        onPress={() => navigation.navigate('searchDetail', {itemType:'service', coords: coordinates, item: item})}>
 
-      <View style={styles.details}>
-        <Label value={item.title} style={styles.titleLbl}/>
-        <Label value={item.desc} style={styles.detailLbl}/>
-      </View>
+      <>
+        <View style={styles.fotoWrap}>
+          {renderLogo()}
+        </View>
 
-      <View style={styles.selectBtn}>
-        <TouchableHighlight underlayColor='#fafafa'
-            onPress={() => null}>
-          <Icon icon={faMapLocation} style={styles.icon} size={20}/>
-        </TouchableHighlight>
-      </View>
-    </View>
+        <View style={styles.details}>
+          <Label value={item.name} style={[styles.lbl, styles.titleLbl]}/>
+          <Label value={item.cat} style={[styles.lbl, styles.detailLbl]}/>
+          <Label value={item.catDetail} style={[styles.lbl, styles.detailLbl]}/>
+          <Label value={item.mapAddr} style={[styles.lbl, styles.detailLbl]}/>
+          {renderDistance()}
+        </View>
+
+        <View style={styles.selectBtn}>
+          {renderMapLink()}
+
+          <TouchableHighlight underlayColor='#fafafa' style={styles.phoneIcon}
+              onPress={() => Linking.openURL(`tel:${item.phone}`)}>
+            <Icon icon={faPhone} style={styles.icon} size={20}/>
+          </TouchableHighlight>
+        </View>
+      </>
+    </TouchableHighlight>
   );
 }
 
@@ -50,7 +115,7 @@ const styles = StyleSheet.create({
     flexDirection:'row',
     backgroundColor:'#fafafa',
     width:size.width - 40,
-    height: 100,
+    height: 150,
     marginBottom:10,
     paddingVertical:10,
     paddingHorizontal:20,
@@ -61,15 +126,22 @@ const styles = StyleSheet.create({
   details:{
     width:(size.width - 40 )/2,
   },
+  lbl:{
+    marginVertical:3
+  },
   titleLbl:{
     fontSize:14,
-    alignSelf:'flex-start'
+    alignSelf:'flex-start',
+    fontFamily:'Montserrat-Bold',
+    color:'#134C83'
   },
   detailLbl:{
-    fontSize:12,
+    fontSize:10,
+    color:'#444'
   },
-  fotosWrap: {
-    flexDirection:'row'
+  distLbl:{
+    fontSize:10,
+    color:'#444'
   },
   fotos: {
     width:50,
@@ -77,6 +149,18 @@ const styles = StyleSheet.create({
   },
   icon:{
     color:'#134C83'
+  },
+  logo:{
+    resizeMode: 'contain',
+    width:(size.width - 40 )/5,
+    height:100
+  },
+  fotoWrap:{
+    width:(size.width - 40 )/5,
+    alignItems:'center'
+  },
+  phoneIcon: {
+    marginTop:20
   }
 });
 
